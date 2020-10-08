@@ -64,42 +64,60 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.headers().cacheControl();
-        http.csrf().disable()
-                .authorizeRequests().antMatchers("/appinfo").permitAll()
-                .antMatchers("/registerUser").permitAll()
-                .antMatchers("/findUser").permitAll()
-                .antMatchers("/login**").permitAll()
-                //TODO: sample call secured with ROLE_API
-                //.antMatchers("/ping").hasAuthority("ROLE_API")
-                .antMatchers(HttpMethod.GET, "/**").permitAll()
+        if ("off".equalsIgnoreCase(System.getProperty("web.security"))) {
+            http.csrf().disable()
+                    .authorizeRequests()
+                    .antMatchers(HttpMethod.DELETE, "/**").permitAll()
+                    .antMatchers(HttpMethod.GET, "/**").permitAll()
+                    .antMatchers(HttpMethod.POST, "/**").permitAll()
+                    .antMatchers(HttpMethod.PUT, "/**").permitAll()
+                    .anyRequest().authenticated()
+                    .and()
+                    .addFilterBefore(standardLoginRequestFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(ssoAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(ldapLoginRequestFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(apiTokenRequestFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(githubWebhookRequestFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .exceptionHandling().authenticationEntryPoint(new Http401AuthenticationEntryPoint("Authorization"));
+        } else {
+            http.csrf().disable()
+                    .authorizeRequests().antMatchers("/appinfo").permitAll()
+                    .antMatchers("/registerUser").permitAll()
+                    .antMatchers("/findUser").permitAll()
+                    .antMatchers("/login**").permitAll()
+                    //TODO: sample call secured with ROLE_API
+                    //.antMatchers("/ping").hasAuthority("ROLE_API")
+                    .antMatchers(HttpMethod.GET, "/**").permitAll()
 
-                // Temporary solution to allow jenkins plugin to send data to the api
-                //TODO: Secure with API Key
-                .antMatchers(HttpMethod.POST, "/webhook/sonarqube/v1").permitAll()
-                .antMatchers(HttpMethod.POST, "/build").permitAll()
-                .antMatchers(HttpMethod.POST, "/deploy").permitAll()
-                .antMatchers(HttpMethod.POST, "/v2/build").permitAll()
-                .antMatchers(HttpMethod.POST, "/v3/build").permitAll()
-                .antMatchers(HttpMethod.POST, "/v2/deploy").permitAll()
-                .antMatchers(HttpMethod.POST, "/performance").permitAll()
-                .antMatchers(HttpMethod.POST, "/artifact").permitAll()
-                .antMatchers(HttpMethod.POST, "/quality/test").permitAll()
-                .antMatchers(HttpMethod.POST, "/quality/static-analysis").permitAll()
-                .antMatchers(HttpMethod.POST, "/v2/quality/test").permitAll()
-                .antMatchers(HttpMethod.POST, "/v2/quality/static-analysis").permitAll()
-                .antMatchers(HttpMethod.POST, "/quality/test-result").permitAll()
-                .antMatchers(HttpMethod.POST, "/generic-item").permitAll()
-                .antMatchers(HttpMethod.POST, "/generic-binary-artifact").permitAll()
-                .antMatchers(HttpMethod.POST, "/metadata/create").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .addFilterBefore(standardLoginRequestFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(ssoAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(ldapLoginRequestFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(apiTokenRequestFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(githubWebhookRequestFilter(), UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling().authenticationEntryPoint(new Http401AuthenticationEntryPoint("Authorization"));
+                    // Temporary solution to allow jenkins plugin to send data to the api
+                    //TODO: Secure with API Key
+                    .antMatchers(HttpMethod.POST, "/webhook/sonarqube/v1").permitAll()
+                    .antMatchers(HttpMethod.POST, "/build").permitAll()
+                    .antMatchers(HttpMethod.POST, "/deploy").permitAll()
+                    .antMatchers(HttpMethod.POST, "/v2/build").permitAll()
+                    .antMatchers(HttpMethod.POST, "/v3/build").permitAll()
+                    .antMatchers(HttpMethod.POST, "/v2/deploy").permitAll()
+                    .antMatchers(HttpMethod.POST, "/performance").permitAll()
+                    .antMatchers(HttpMethod.POST, "/artifact").permitAll()
+                    .antMatchers(HttpMethod.POST, "/quality/test").permitAll()
+                    .antMatchers(HttpMethod.POST, "/quality/static-analysis").permitAll()
+                    .antMatchers(HttpMethod.POST, "/v2/quality/test").permitAll()
+                    .antMatchers(HttpMethod.POST, "/v2/quality/static-analysis").permitAll()
+                    .antMatchers(HttpMethod.POST, "/quality/test-result").permitAll()
+                    .antMatchers(HttpMethod.POST, "/generic-item").permitAll()
+                    .antMatchers(HttpMethod.POST, "/generic-binary-artifact").permitAll()
+                    .antMatchers(HttpMethod.POST, "/metadata/create").permitAll()
+                    .anyRequest().authenticated()
+                    .and()
+                    .addFilterBefore(standardLoginRequestFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(ssoAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(ldapLoginRequestFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(apiTokenRequestFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(githubWebhookRequestFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .exceptionHandling().authenticationEntryPoint(new Http401AuthenticationEntryPoint("Authorization"));
+        }
     }
 
     @Override
